@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "952443781352",
+    "firebase_url": "https://studentcloud-a580c.firebaseio.com",
+    "project_id": "studentcloud-a580c",
+    "storage_bucket": "studentcloud-a580c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:952443781352:android:ddf207485b9ad9b1",
+        "android_client_info": {
+          "package_name": "com.example.mysocialmedia"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "952443781352-pvgcn9e4flsuib6hjth05q4sub6kjt2d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.mysocialmedia",
+            "certificate_hash": "95c31418d0c0c41db50f271f3ef6bd16ac262252"
+          }
+        },
+        {
+          "client_id": "952443781352-a74tfu2kvfp569jnc2l5nr00s6nv5dn8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAI25P9V-2qBojrJUbjhiOr1v-0eUt32xk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "952443781352-a74tfu2kvfp569jnc2l5nr00s6nv5dn8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
