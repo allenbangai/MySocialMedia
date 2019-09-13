@@ -14,7 +14,7 @@
     <string name="menu_friends">Friends</string>
     <string name="menu_nav_find_friends">Find Friends</string>
     <string name="menu_settings">Setting</string>
-    <string name="menu_logout">Setting</string>
+    <string name="menu_logout">Logout</string>
     <string name="menu_share">Share</string>
     <string name="menu_send">Send</string>
 
@@ -25,4 +25,6 @@
     <string name="setup_full_name">Full Name</string>
     <string name="setup_country">Country</string>
     <string name="setup_save_info">Save</string>
+    <string name="progressBar_logging_text">Logging to user account</string>
+    <string name="progressBar_loading_complete">Loading Complete</string>
 </resources>
