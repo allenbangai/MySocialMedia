@@ -15,11 +15,14 @@ import android.widget.EditText;
 import android.widget.Gallery;
 import android.widget.Toast;
 
+import com.google.android.gms.auth.api.signin.internal.Storage;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.theartofdev.edmodo.cropper.CropImage;
+import com.theartofdev.edmodo.cropper.CropImageView;
 
 import java.util.HashMap;
 
@@ -31,9 +34,11 @@ public class SetupActivity extends AppCompatActivity {
     private Button setupSaveInfo;
     private CircleImageView setupProfieImage;
     private ProgressDialog loadingbar;
+
     private FirebaseAuth mAuth;
     private DatabaseReference mUserReference;
-
+    // Create a storage reference from our app
+    //private StorageReference mUserProfileImage;
 
     String currentUserId;
     final static int gallery_Prick = 1;
@@ -42,6 +47,7 @@ public class SetupActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_setup);
+
 
         mAuth = FirebaseAuth.getInstance();
         currentUserId = mAuth.getCurrentUser().getUid();
@@ -76,6 +82,18 @@ public class SetupActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == gallery_Prick && resultCode == RESULT_OK && data != null){
             Uri ImageUri = data.getData();
+
+            CropImage.activity()
+                    .setGuidelines(CropImageView.Guidelines.ON)
+                    .setAspectRatio(1,1).start(this);
+        }
+
+        if(requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE){
+            CropImage.ActivityResult result = CropImage.getActivityResult(data);
+
+            if(requestCode == RESULT_OK){
+                Uri resultUri = result.getUri();
+            }
         }
     }
 
@@ -94,6 +112,12 @@ public class SetupActivity extends AppCompatActivity {
             Toast.makeText(this, "Country field is empty", Toast.LENGTH_LONG).show();
         }
         else{
+            loadingbar = new ProgressDialog(this);
+            loadingbar.setTitle("Saving Info");
+            loadingbar.setMessage("Creating Your New Account");
+            loadingbar.show();
+            loadingbar.setCanceledOnTouchOutside(true);
+
             HashMap userMap = new HashMap();
             userMap.put("username", userName);
             userMap.put("full_name", fullName);
@@ -102,14 +126,6 @@ public class SetupActivity extends AppCompatActivity {
             userMap.put("level_of_Study", "none");
             userMap.put("gender", "none");
             userMap.put("birth_date", "none");
-
-
-            loadingbar = new ProgressDialog(this);
-            loadingbar.setTitle("Saving Info");
-            loadingbar.setMessage("Creating Your New Account");
-            loadingbar.show();
-            loadingbar.setCanceledOnTouchOutside(true);
-
             mUserReference.updateChildren(userMap).addOnCompleteListener(new OnCompleteListener() {
                 @Override
                 public void onComplete(@NonNull Task task) {
