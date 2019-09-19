@@ -21,6 +21,9 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
 
@@ -33,12 +36,14 @@ public class SetupActivity extends AppCompatActivity {
     private EditText setupUsername, setupFullName, setupCountryName;
     private Button setupSaveInfo;
     private CircleImageView setupProfieImage;
+
+    // loadingbar from class ProgressDialog to be changed to ProgressBar
     private ProgressDialog loadingbar;
 
     private FirebaseAuth mAuth;
     private DatabaseReference mUserReference;
     // Create a storage reference from our app
-    //private StorageReference mUserProfileImage;
+    private StorageReference mUserProfileImage;
 
     String currentUserId;
     final static int gallery_Prick = 1;
@@ -48,10 +53,10 @@ public class SetupActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_setup);
 
-
         mAuth = FirebaseAuth.getInstance();
         currentUserId = mAuth.getCurrentUser().getUid();
         mUserReference = FirebaseDatabase.getInstance().getReference().child("Users").child(currentUserId);
+        mUserProfileImage = FirebaseStorage.getInstance().getReference().child("Profile Images");
 
         setupCountryName = findViewById(R.id.id_setup_country);
         setupFullName = findViewById(R.id.id_setuo_full_name);
@@ -91,8 +96,51 @@ public class SetupActivity extends AppCompatActivity {
         if(requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE){
             CropImage.ActivityResult result = CropImage.getActivityResult(data);
 
-            if(requestCode == RESULT_OK){
+            if(resultCode == RESULT_OK){
+                // loadingbar from class ProgressDialog to be changed to ProgressBar
+                loadingbar = new ProgressDialog(this);
+                loadingbar.setTitle("Saving Info");
+                loadingbar.setMessage("Updating your Profile Image");
+                loadingbar.show();
+                loadingbar.setCanceledOnTouchOutside(true);
+
                 Uri resultUri = result.getUri();
+
+                StorageReference filePath = mUserProfileImage.child(currentUserId + ".jpg");
+
+                filePath.putFile(resultUri).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+                        if(task.isSuccessful()){
+                            Toast.makeText(SetupActivity.this, "Profile Image Successfully Uploaded ", Toast.LENGTH_LONG);
+                            final String downloadaUrl = task.getResult().getUploadSessionUri().toString();
+
+                            mUserReference.child("profileImage").setValue(downloadaUrl).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    if(task.isSuccessful()){
+                                        Intent intent = new Intent(SetupActivity.this, SetupActivity.class);
+                                        startActivity(intent);
+
+                                        Toast.makeText(SetupActivity.this, "Profile Image Succefully saved", Toast.LENGTH_LONG);
+                                        loadingbar.dismiss();
+                                    }
+                                    else{
+                                        String errorMessage = task.getException().getMessage();
+                                        Toast.makeText(SetupActivity.this, "Error Message \n" + errorMessage, Toast.LENGTH_LONG);
+                                    }
+                                }
+                            });
+                        }
+                        else{
+                            String errorMessage = task.getException().getMessage();
+                            Toast.makeText(SetupActivity.this, "Error Message \n" + errorMessage, Toast.LENGTH_LONG);
+                        }
+                    }
+                });
+            }
+            else{
+                Toast.makeText(SetupActivity.this, "Error Message \n Image can't be cropped", Toast.LENGTH_LONG);
             }
         }
     }
@@ -112,6 +160,7 @@ public class SetupActivity extends AppCompatActivity {
             Toast.makeText(this, "Country field is empty", Toast.LENGTH_LONG).show();
         }
         else{
+            // loadingbar from class ProgressDialog to be changed to ProgressBar
             loadingbar = new ProgressDialog(this);
             loadingbar.setTitle("Saving Info");
             loadingbar.setMessage("Creating Your New Account");
