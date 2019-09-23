@@ -23,6 +23,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.squareup.picasso.Picasso;
 
 import androidx.drawerlayout.widget.DrawerLayout;
 
@@ -33,14 +34,22 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.view.Menu;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import java.util.Objects;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     private NavigationView navigationView;
     private DrawerLayout drawerLayout;
-    private RecyclerView recycler;
+    private RecyclerView postList;
     private FirebaseAuth mAuth;
     private DatabaseReference mUserRef;
+    private CircleImageView navProfileImage;
+    private TextView navProfilename;
+    private String currentUserID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,10 +68,36 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         });
 
         mAuth = FirebaseAuth.getInstance();
-        mUserRef = FirebaseDatabase.getInstance().getReference().child("Users");
+        currentUserID = mAuth.getCurrentUser().getUid();
+        mUserRef = FirebaseDatabase.getInstance().getReference().child("Users").child(currentUserID);
 
         drawerLayout = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.nav_view);
+        navProfileImage = findViewById(R.id.id_imageHeaderView);
+        navProfilename = findViewById(R.id.id_textHeaderView);
+
+        mUserRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    if (dataSnapshot.hasChild("full_name")) {
+                        String name = dataSnapshot.child("full_name").getValue().toString();
+                        Toast.makeText(MainActivity.this, "You have a username that is"+ name, Toast.LENGTH_SHORT).show();
+                        //navProfilename.setTextKeepState(name);
+                    }
+                    if (dataSnapshot.hasChild("profileImage")) {
+                        String image = dataSnapshot.child("profileImage").getValue().toString();
+                        //Picasso.get().load(image).placeholder(R.drawable.profile_icon).into(navProfileImage);
+                        //Toast.makeText(MainActivity.this, "You have a profile that is\n\n"+ image, Toast.LENGTH_SHORT);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
 
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawerLayout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);

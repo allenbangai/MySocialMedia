@@ -1,0 +1,5 @@
+<root>
+    <item name='com.squareup.picasso.Picasso'>
+        <annotation name='java.lang.Deprecated' />
+    </item>
+</root>

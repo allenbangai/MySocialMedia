@@ -2,12 +2,20 @@ package com.example.mysocialmedia;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.app.LauncherActivity;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
@@ -19,17 +27,26 @@ import com.google.android.gms.auth.api.signin.internal.Storage;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Picasso.LoadedFrom;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
 
+import java.io.IOException;
 import java.util.HashMap;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+
+import static android.content.pm.PackageManager.PERMISSION_DENIED;
+import static java.lang.System.load;
 
 public class SetupActivity extends AppCompatActivity {
 
@@ -47,6 +64,7 @@ public class SetupActivity extends AppCompatActivity {
 
     String currentUserId;
     final static int gallery_Prick = 1;
+    final static int PERMISSION_CODE = 1001;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,14 +90,71 @@ public class SetupActivity extends AppCompatActivity {
         });
 
         setupProfieImage.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.M)
             @Override
             public void onClick(View view) {
+                //if statement to check wheather storage permission has being granted
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+                    if(checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PERMISSION_DENIED){
+                        //permission not granted, request it
+                        String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE};
+                        //show popup for runtime permission request
+                        requestPermissions(permissions, PERMISSION_CODE);
+                    }
+                    //permission already granted
+                    /*
+                    *Remember to remove the final from the resultUri in other to use a reference variable and assign it it the resultUri
+                    * so that we can directly put the image in the userProfileImage after asking storage permission
+                    **/
+                }else{
+                    //System O.S is less than Marshmallow
+                    Toast.makeText(SetupActivity.this, "System O.S is less than Marshmallow", Toast.LENGTH_SHORT).show();
+                }
+
                 Intent galleryIntent = new Intent();
                 galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
                 galleryIntent.setType("image/*");
                 startActivityForResult(galleryIntent, gallery_Prick);
             }
         });
+
+        mUserReference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if(dataSnapshot.exists()){
+                    if(dataSnapshot.hasChild("profileImage")){
+                        Toast.makeText(SetupActivity.this, "dataSnapshot has child profileImage", Toast.LENGTH_SHORT).show();
+                        //getting string url of the image just uploaded after cropping
+                        String image = dataSnapshot.child("profileImage").getValue().toString();
+                        Toast.makeText(SetupActivity.this, image+"\n\n message", Toast.LENGTH_SHORT).show();
+
+                        //Note that Picasso is not deprecated, I annotated it as deprecated as a mistake
+                        //loading the square image uploaded to firebase storage as profile image
+                        Picasso.get().load(image).placeholder(R.drawable.profile).into(setupProfieImage);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode){
+            case PERMISSION_CODE:
+            {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(SetupActivity.this, "You granted storage permission to this app", Toast.LENGTH_SHORT).show();
+                }
+                else{
+                    Toast.makeText(SetupActivity.this, "Storage Permission denied...!", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
     }
 
     @Override
@@ -87,6 +162,7 @@ public class SetupActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == gallery_Prick && resultCode == RESULT_OK && data != null){
             Uri ImageUri = data.getData();
+
 
             CropImage.activity()
                     .setGuidelines(CropImageView.Guidelines.ON)
@@ -104,7 +180,7 @@ public class SetupActivity extends AppCompatActivity {
                 loadingbar.show();
                 loadingbar.setCanceledOnTouchOutside(true);
 
-                Uri resultUri = result.getUri();
+                final Uri resultUri = result.getUri();
 
                 StorageReference filePath = mUserProfileImage.child(currentUserId + ".jpg");
 
@@ -116,12 +192,22 @@ public class SetupActivity extends AppCompatActivity {
                             final String downloadaUrl = task.getResult().getUploadSessionUri().toString();
 
                             mUserReference.child("profileImage").setValue(downloadaUrl).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                @SuppressLint("ShowToast")
                                 @Override
                                 public void onComplete(@NonNull Task<Void> task) {
                                     if(task.isSuccessful()){
                                         Intent intent = new Intent(SetupActivity.this, SetupActivity.class);
                                         startActivity(intent);
 
+                                        //mUserProfileImage using bitmap;
+                                        /*try {
+                                            Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), resultUri);
+                                            setupProfieImage.setImageBitmap(bitmap);
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }*/
+                                        //mUserProfileImage using setImageURI;
+                                        setupProfieImage.setImageURI(resultUri);
                                         Toast.makeText(SetupActivity.this, "Profile Image Succefully saved", Toast.LENGTH_LONG);
                                         loadingbar.dismiss();
                                     }
@@ -138,6 +224,7 @@ public class SetupActivity extends AppCompatActivity {
                         }
                     }
                 });
+
             }
             else{
                 Toast.makeText(SetupActivity.this, "Error Message \n Image can't be cropped", Toast.LENGTH_LONG);
