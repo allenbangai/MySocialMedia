@@ -69,14 +69,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         mAuth = FirebaseAuth.getInstance();
         currentUserID = mAuth.getCurrentUser().getUid();
-        mUserRef = FirebaseDatabase.getInstance().getReference().child("Users").child(currentUserID);
+        mUserRef = FirebaseDatabase.getInstance().getReference().child("Users");
 
         drawerLayout = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.nav_view);
         navProfileImage = findViewById(R.id.id_imageHeaderView);
         navProfilename = findViewById(R.id.id_textHeaderView);
 
-        mUserRef.addValueEventListener(new ValueEventListener() {
+        mUserRef.child(currentUserID).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
