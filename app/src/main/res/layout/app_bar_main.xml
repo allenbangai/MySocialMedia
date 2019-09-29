@@ -22,12 +22,26 @@
 
     <include layout="@layout/content_main" />
 
+    <ImageButton
+        android:id="@+id/id_add_new_post_button"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
+        android:tint="@color/colorPrimary"
+        android:layout_alignBottom="@id/id_main_container"
+        android:layout_margin="12dp"
+        android:layout_gravity="bottom"
+        android:background="@drawable/button"
+        android:baselineAlignBottom="false"
+        android:focusableInTouchMode="false"
+        android:scaleType="centerCrop"
+        android:src="@drawable/add_post_high" />
+
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab"
+        android:id="@+id/id_add_new_post_fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/fab_margin"
-        app:srcCompat="@android:drawable/ic_dialog_email" />
+        app:srcCompat="@android:drawable/ic_dialog_email"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

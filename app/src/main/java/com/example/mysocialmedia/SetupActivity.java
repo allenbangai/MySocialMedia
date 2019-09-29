@@ -7,23 +7,18 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.LauncherActivity;
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Gallery;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.auth.api.signin.internal.Storage;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -36,17 +31,15 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Picasso.LoadedFrom;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
 
-import java.io.IOException;
 import java.util.HashMap;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
-import static java.lang.System.load;
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 public class SetupActivity extends AppCompatActivity {
 
@@ -63,8 +56,9 @@ public class SetupActivity extends AppCompatActivity {
     private StorageReference mUserProfileImage;
 
     String currentUserId;
-    final static int gallery_Prick = 1;
-    final static int PERMISSION_CODE = 1001;
+    private final static int gallery_Prick = 1;
+    private final static int PERMISSION_CODE_01 = 1001;
+    private final static int PERMISSION_CODE_02 = 1002;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,7 +93,13 @@ public class SetupActivity extends AppCompatActivity {
                         //permission not granted, request it
                         String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE};
                         //show popup for runtime permission request
-                        requestPermissions(permissions, PERMISSION_CODE);
+                        requestPermissions(permissions, PERMISSION_CODE_01);
+                    }
+                    if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PERMISSION_DENIED){
+                        //permission not granted, request it
+                        String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE};
+                        //show popup for runtime permission request
+                        requestPermissions(permissions, PERMISSION_CODE_02);
                     }
                     //permission already granted
                     /*
@@ -123,7 +123,6 @@ public class SetupActivity extends AppCompatActivity {
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if(dataSnapshot.exists()){
                     if(dataSnapshot.hasChild("profileImage")){
-                        Toast.makeText(SetupActivity.this, "dataSnapshot has child profileImage", Toast.LENGTH_SHORT).show();
                         //getting string url of the image just uploaded after cropping
                         String image = dataSnapshot.child("profileImage").getValue().toString();
                         Toast.makeText(SetupActivity.this, image+"\n\n message", Toast.LENGTH_SHORT).show();
@@ -145,10 +144,20 @@ public class SetupActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode){
-            case PERMISSION_CODE:
+            case PERMISSION_CODE_01:
             {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(SetupActivity.this, "You granted storage permission to this app", Toast.LENGTH_SHORT).show();
+                if (grantResults.length > 0 && grantResults[0] == PERMISSION_GRANTED) {
+                    Toast.makeText(SetupActivity.this, "You granted READ storage permission to this app", Toast.LENGTH_SHORT).show();
+                }
+                else{
+                    Toast.makeText(SetupActivity.this, "Storage Permission denied...!", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            case PERMISSION_CODE_02:
+            {
+                if (grantResults.length > 0 && grantResults[0] == PERMISSION_GRANTED) {
+                    Toast.makeText(SetupActivity.this, "You granted WRITE storage permission to this app", Toast.LENGTH_SHORT).show();
                 }
                 else{
                     Toast.makeText(SetupActivity.this, "Storage Permission denied...!", Toast.LENGTH_SHORT).show();
@@ -214,6 +223,7 @@ public class SetupActivity extends AppCompatActivity {
                                     else{
                                         String errorMessage = task.getException().getMessage();
                                         Toast.makeText(SetupActivity.this, "Error Message \n" + errorMessage, Toast.LENGTH_LONG);
+                                        loadingbar.dismiss();
                                     }
                                 }
                             });
@@ -282,5 +292,6 @@ public class SetupActivity extends AppCompatActivity {
         Intent mainActivityIntent = new Intent(SetupActivity.this, MainActivity.class);
         mainActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK| Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(mainActivityIntent);
+        finish();
     }
 }

@@ -20,11 +20,19 @@
 
     <string name="id_create_an_account">Create Account</string>
     <string name="id_login_into_account">Login</string>
-    
+
     <string name="setup_username">Username</string>
     <string name="setup_full_name">Full Name</string>
     <string name="setup_country">Country</string>
     <string name="setup_save_info">Save</string>
     <string name="progressBar_logging_text">Logging to user account</string>
     <string name="progressBar_loading_complete">Loading Complete</string>
+    <string name="postActivity_writeSomething">Write something about you here</string>
+    <string name="PostActivity_add_post_button">Add Post</string>
+    <string name="postActivity_label">Update Post</string>
+    <string name="all_post_user_name">User name</string>
+    <string name="all_post_update_text">Post has being Updated at</string>
+    <string name="all_post_date">Date</string>
+    <string name="all_post_time">Time</string>
+    <string name="all_post_description">Post Description</string>
 </resources>

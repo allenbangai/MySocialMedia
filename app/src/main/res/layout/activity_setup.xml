@@ -18,7 +18,7 @@
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
             android:layout_marginEnd="8dp"
-            android:layout_marginBottom="8dp"
+            android:layout_marginBottom="20dp"
             android:scaleType="centerCrop"
             android:src="@drawable/profile"
             app:layout_constraintBottom_toTopOf="@+id/id_setup_username"

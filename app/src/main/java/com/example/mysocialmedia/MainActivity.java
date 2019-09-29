@@ -3,10 +3,12 @@ package com.example.mysocialmedia;
 import android.content.Intent;
 import android.os.Bundle;
 
+import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
-import android.os.Handler;
+import android.view.LayoutInflater;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -29,14 +31,15 @@ import androidx.drawerlayout.widget.DrawerLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.Menu;
-import android.widget.ProgressBar;
+import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import java.util.Objects;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -44,12 +47,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private NavigationView navigationView;
     private DrawerLayout drawerLayout;
-    private RecyclerView postList;
-    private FirebaseAuth mAuth;
-    private DatabaseReference mUserRef;
     private CircleImageView navProfileImage;
     private TextView navProfilename;
-    private String currentUserID;
+    private ImageButton addNewPostButton;
+    private RecyclerView mPostRecycler;
+    private FirebaseAuth mAuth;
+    private FirebaseUser mCurrentUser;
+    private DatabaseReference mUserRef, mPostRef;
+    String currentUserId;
+    private FirebaseRecyclerAdapter<PostModule, PostModuleViewHolder> firebaseRecyclerAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,7 +64,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = findViewById(R.id.fab);
+        FloatingActionButton fab = findViewById(R.id.id_add_new_post_fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -67,54 +73,171 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         });
 
+        mPostRecycler = findViewById(R.id.id_all_student_post_list);
+        mPostRecycler.setHasFixedSize(true);
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+        linearLayoutManager.setReverseLayout(true);
+        linearLayoutManager.setStackFromEnd(true);
+        mPostRecycler.setLayoutManager(linearLayoutManager);
+
         mAuth = FirebaseAuth.getInstance();
-        currentUserID = mAuth.getCurrentUser().getUid();
+        mCurrentUser = mAuth.getCurrentUser();
+        if (mCurrentUser != null) {
+            currentUserId = mAuth.getUid();
+            Toast.makeText(MainActivity.this, currentUserId, Toast.LENGTH_SHORT).show();
+        }
         mUserRef = FirebaseDatabase.getInstance().getReference().child("Users");
+        mPostRef = FirebaseDatabase.getInstance().getReference().child("Post").child(currentUserId);
 
         drawerLayout = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.nav_view);
-        navProfileImage = findViewById(R.id.id_imageHeaderView);
-        navProfilename = findViewById(R.id.id_textHeaderView);
+        addNewPostButton = findViewById(R.id.id_add_new_post_button);
 
-        mUserRef.child(currentUserID).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    if (dataSnapshot.hasChild("full_name")) {
-                        String name = dataSnapshot.child("full_name").getValue().toString();
-                        Toast.makeText(MainActivity.this, "You have a username that is"+ name, Toast.LENGTH_SHORT).show();
-                        //navProfilename.setTextKeepState(name);
-                    }
-                    if (dataSnapshot.hasChild("profileImage")) {
-                        String image = dataSnapshot.child("profileImage").getValue().toString();
-                        //Picasso.get().load(image).placeholder(R.drawable.profile_icon).into(navProfileImage);
-                        //Toast.makeText(MainActivity.this, "You have a profile that is\n\n"+ image, Toast.LENGTH_SHORT);
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
+        View navView = navigationView.inflateHeaderView(R.layout.nav_header_main);
+        navProfileImage = navView.findViewById(R.id.id_imageHeaderView);
+        navProfilename = navView.findViewById(R.id.id_textHeaderView);
 
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawerLayout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawerLayout.addDrawerListener(toggle);
         toggle.syncState();
         navigationView.setNavigationItemSelectedListener(this);
+
+        addNewPostButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendUserToPostActivity();
+            }
+        });
+
+        mUserRef.child(currentUserId).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    if (dataSnapshot.hasChild("full_name")) {
+                        String name = dataSnapshot.child("full_name").getValue().toString();
+                        Toast.makeText(MainActivity.this, "Your full name is"+ name, Toast.LENGTH_SHORT).show();
+                        navProfilename.setText(name);
+                    }
+                    if (dataSnapshot.hasChild("profileImage")) {
+                        String image = dataSnapshot.child("profileImage").getValue().toString();
+                        Picasso.get().load(image).placeholder(R.drawable.profile).into(navProfileImage);
+                        //Toast.makeText(MainActivity.this, "You have a profile that is\n\n"+ image, Toast.LENGTH_SHORT);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) { }
+        });
+
+        displayAllUsersPost();
+    }
+
+    private void displayAllUsersPost() {
+        FirebaseRecyclerOptions options = new FirebaseRecyclerOptions.Builder<PostModule>().setQuery(mPostRef, PostModule.class).build();
+
+        firebaseRecyclerAdapter = new FirebaseRecyclerAdapter<PostModule, PostModuleViewHolder>(options) {
+            @Override
+            protected void onBindViewHolder(@NonNull PostModuleViewHolder holder, int position, @NonNull PostModule model) {
+                holder.setfullName(model.getFullName());
+                holder.setProfileImage(model.getProfileImage());
+                holder.setTime(model.getTime());
+                holder.setDate(model.getDate());
+                holder.setDescription(model.getDescription());
+                holder.setPostImage(model.getPostImage());
+            }
+
+            @NonNull
+            @Override
+            public PostModuleViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.all_posts, parent, false);
+                PostModuleViewHolder postModuleViewHolder = new PostModuleViewHolder(view);
+                return postModuleViewHolder;
+            }
+        };
+        firebaseRecyclerAdapter.startListening();
+        mPostRecycler.setAdapter(firebaseRecyclerAdapter);
+    }
+
+    public static class PostModuleViewHolder extends RecyclerView.ViewHolder{
+
+        View mView;
+        private TextView username;
+        private CircleImageView image;
+        private TextView postTime;
+        private TextView postDate;
+        private TextView postDescription;
+        private ImageView imagePostView;
+
+        public PostModuleViewHolder(@NonNull View itemView) {
+            super(itemView);
+            mView = itemView;
+        }
+
+        public void setfullName(String fullname){
+            username = mView.findViewById(R.id.id_post_username);
+            username.setText(fullname);
+        }
+
+        public void setProfileImage(String profileImage){
+            image = mView.findViewById(R.id.id_post_profileImage);
+            Picasso.get().load(profileImage).into(image);
+        }
+
+        public void setTime(String time){
+            postTime = mView.findViewById(R.id.id_post_time);
+            postTime.setText(time);
+        }
+
+        public void setDate(String date){
+            postDate = mView.findViewById(R.id.id_post_date);
+            postDate.setText(date);
+        }
+
+        public void setDescription(String description){
+            postDescription = mView.findViewById(R.id.id_post_description);
+            postDescription.setText(description);
+        }
+
+        public void setPostImage(String postImage){
+            imagePostView = mView.findViewById(R.id.id_post_image);
+            Picasso.get().load(postImage).into(imagePostView);
+        }
+    }
+
+    private void sendUserToPostActivity() {
+        startActivity(new Intent(MainActivity.this, PostActivity.class));
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        if(currentUser == null) {
-            sendUserToLoginActivity();
+        FirebaseUser mCurrentUser = mAuth.getCurrentUser();
+        if(mCurrentUser == null) {
+            sendUserToLogInActivity();
         }else{
             checkUserExperience();
+        }
+
+        if(firebaseRecyclerAdapter == null){
+            firebaseRecyclerAdapter.startListening();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if(firebaseRecyclerAdapter != null){
+            firebaseRecyclerAdapter.stopListening();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(firebaseRecyclerAdapter == null){
+            firebaseRecyclerAdapter.startListening();
         }
     }
 
@@ -139,13 +262,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Intent setupActivityIntent = new Intent(MainActivity.this, SetupActivity.class);
         setupActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(setupActivityIntent);
-        finish();
-    }
-
-    private void sendUserToLoginActivity() {
-        Intent loginIntent = new Intent(MainActivity.this, LoginActivity.class);
-        loginIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(loginIntent);
         finish();
     }
 
@@ -187,8 +303,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_home) {
+        if (id == R.id.nav_camera) {
             // Handle the camera action
+        } else if (id == R.id.nav_add_post) {
+            sendUserToPostActivity();
         } else if (id == R.id.nav_gallery) {
 
         } else if (id == R.id.nav_friends) {

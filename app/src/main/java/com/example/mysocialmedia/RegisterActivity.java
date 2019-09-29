@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -23,6 +24,7 @@ public class RegisterActivity extends AppCompatActivity {
 
     private EditText registerUserEmail, registerUserPassword, registerUserConfirmPassword;
     private Button registerCreateAccountButton;
+    private TextView haveAnAccount;
     private ProgressDialog loadingbar;
     private FirebaseAuth mAuth;
 
@@ -37,6 +39,7 @@ public class RegisterActivity extends AppCompatActivity {
         registerUserConfirmPassword = findViewById(R.id.id_register_confirm_password);
         registerUserPassword = findViewById(R.id.id_register_password);
         registerUserEmail = findViewById(R.id.id_register_email);
+        haveAnAccount = findViewById(R.id.id_log_in);
 
         registerCreateAccountButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -44,17 +47,19 @@ public class RegisterActivity extends AppCompatActivity {
                 createAccout();
             }
         });
+
+        haveAnAccount.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                goToLoginActivity();
+            }
+        });
+
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-    }
-
-    private void sendUserToMainActivity() {
-        Intent mainActivityIntent = new Intent(RegisterActivity.this, MainActivity.class);
-        mainActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK| Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(mainActivityIntent);
     }
 
     private void createAccout() {
@@ -107,6 +112,11 @@ public class RegisterActivity extends AppCompatActivity {
         Intent setupActivityIntent = new Intent(RegisterActivity.this, SetupActivity.class);
         setupActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(setupActivityIntent);
+        finish();
+    }
+
+    private void goToLoginActivity() {
+        startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
         finish();
     }
 

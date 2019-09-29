@@ -2,8 +2,10 @@
   <dictionary name="DELL">
     <words>
       <w>firebase</w>
+      <w>fullname</w>
       <w>loadingbar</w>
       <w>profie</w>
+      <w>setfull</w>
     </words>
   </dictionary>
 </component>
