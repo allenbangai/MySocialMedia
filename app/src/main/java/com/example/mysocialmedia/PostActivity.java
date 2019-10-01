@@ -151,7 +151,7 @@ public class PostActivity extends AppCompatActivity {
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
             callForDate = Calendar.getInstance();
-            currentDate = new SimpleDateFormat("dd-MM-YYYY");
+            currentDate = new SimpleDateFormat("dd-MMMM-YYYY");
             saveCurrentDate = currentDate.format(callForDate.getTime());
 
             callForTime = Calendar.getInstance();
