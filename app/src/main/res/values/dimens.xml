@@ -7,4 +7,5 @@
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="all_post_text_big_size">16sp</dimen>
     <dimen name="all_post_text_small_size">14sp</dimen>
+    <dimen name="image_hight_400dp_">400dp</dimen>
 </resources>

@@ -42,7 +42,6 @@ public class LoginActivity extends AppCompatActivity {
     private ProgressDialog loadingbar;
     private FirebaseAuth mAuth;
     private ImageView signInWithGoogle;
-    private GoogleApiClient googleApiClient;
     private GoogleSignInClient mGoogleSignInClient;
     private String TAG = "LoginActivity";
 

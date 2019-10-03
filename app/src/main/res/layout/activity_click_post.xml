@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".ClickPostActivity"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:orientation="vertical">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
+        <ImageView
+            android:id="@+id/id_edit_post_imageView"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/image_hight_400dp_"
+            android:layout_margin="14dp"
+            android:layout_marginTop="14dp"
+            android:scaleType="centerInside"
+            android:background="#F01A1919"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/select_image" />
+
+        <TextView
+            android:id="@+id/id_edit_post_description"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="14dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="32dp"
+            android:ems="15"
+            android:inputType="textMultiLine"
+            android:padding="8dp"
+            android:text="TextView"
+            android:textColor="@color/common_google_signin_btn_text_light"
+            android:textColorHint="@color/common_google_signin_btn_text_light"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@+id/id_edit_post_button"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/id_edit_post_imageView" />
+
+        <Button
+            android:id="@+id/id_edit_post_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="8dp"
+            android:background="@color/colorPrimary"
+            android:padding="4dp"
+            android:text="Edit Post"
+            android:textColor="@color/common_google_signin_btn_text_dark_default"
+            android:textSize="16sp"
+            app:layout_constraintBottom_toTopOf="@+id/id_delete_post_button"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/id_edit_post_description" />
+
+        <Button
+            android:id="@+id/id_delete_post_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
+            android:background="@color/colorPrimary"
+            android:padding="4dp"
+            android:text="Delete Post"
+            android:textColor="@color/common_google_signin_btn_text_dark_default"
+            android:textSize="16sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/id_edit_post_button" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.core.widget.NestedScrollView>

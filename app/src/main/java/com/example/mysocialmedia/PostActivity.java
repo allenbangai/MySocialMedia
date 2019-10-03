@@ -57,6 +57,7 @@ public class PostActivity extends AppCompatActivity {
     private String currentUserId;
     private String userFullName;
     private String userProfileImage;
+    private String downloadPostImageUri;
     private final static int gallery_Prick = 1;
     private final static int PERMISSION_CODE_01 = 1001;
     private final static int PERMISSION_CODE_02 = 1002;
@@ -65,10 +66,11 @@ public class PostActivity extends AppCompatActivity {
     private Calendar callForDate, callForTime;
     private SimpleDateFormat currentDate, currentTime;
     private StorageReference mPostImageStorageRef;
-    private String downloadUri;
     private DatabaseReference mUserRef, mUserPost;
     private FirebaseAuth mAuth;
     private FirebaseUser mCurrentUser;
+    private StorageReference filePath;
+    private String downloadURI;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -164,12 +166,19 @@ public class PostActivity extends AppCompatActivity {
         // of "Post Image" of each user in postRandomName
         postRandomName = saveCurrentDate + saveCurrrentTime + imageUriToString;
 
-        StorageReference filePath = mPostImageStorageRef.child("Post Images").child(currentUserId).child(postRandomName + ".jpg");
+        filePath = mPostImageStorageRef.child("Post Images").child(currentUserId).child(postRandomName + ".jpg");
         filePath.putFile(imageUri).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
                 if(task.isSuccessful()){
-                    downloadUri = task.getResult().getUploadSessionUri().toString();
+                    //getting postImageURI and passing it to string downloadUrl
+                    filePath.getDownloadUrl().addOnCompleteListener(new OnCompleteListener<Uri>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Uri> task) {
+                            downloadPostImageUri = task.getResult().toString();
+                            Toast.makeText(PostActivity.this, "postImage uri\n"+ downloadPostImageUri, Toast.LENGTH_SHORT).show();
+                        }
+                    });
                     savingPostInfoToDatabase();
                     Toast.makeText(PostActivity.this, "Image uploaded successfully", Toast.LENGTH_SHORT).show();
                 }
@@ -186,25 +195,45 @@ public class PostActivity extends AppCompatActivity {
         mUserRef.child(currentUserId).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if(dataSnapshot.exists()){
-                    userFullName = dataSnapshot.child("full_name").getValue().toString();
-                    userProfileImage = dataSnapshot.child("profileImage").getValue().toString();
+                if (dataSnapshot.exists()) {
+                    if(dataSnapshot.hasChild("full_name")){
+                        userFullName = dataSnapshot.child("full_name").getValue().toString();
+                    }
+                    if(dataSnapshot.hasChild("profileImage")){
+                        userProfileImage = dataSnapshot.child("profileImage").getValue().toString();
+                    }
+
+                    //getting postImageURI and passing it to string downloadUrl
+                    filePath.getDownloadUrl().addOnCompleteListener(new OnCompleteListener<Uri>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Uri> task) {
+                            downloadPostImageUri = task.getResult().toString();
+                            Toast.makeText(PostActivity.this, "postImage uri\n" + downloadPostImageUri, Toast.LENGTH_SHORT).show();
+
+                            mUserPost.child(currentUserId).child(postRandomName).child("postImage").setValue(downloadPostImageUri).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    Toast.makeText(PostActivity.this, "postImage uri\n" + downloadPostImageUri, Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                    });
 
                     HashMap postMap = new HashMap();
                     postMap.put("uid", currentUserId);
                     postMap.put("time", saveCurrrentTime);
                     postMap.put("day", saveCurrentDate);
                     postMap.put("description", description);
-                    postMap.put("postImage", downloadUri);
                     postMap.put("fullName", userFullName);
                     postMap.put("profileImage", userProfileImage);
                     mUserPost.child(currentUserId).child(postRandomName).updateChildren(postMap).addOnCompleteListener(new OnCompleteListener() {
                         @Override
                         public void onComplete(@NonNull Task task) {
-                            if(task.isSuccessful()){
+                            if (task.isSuccessful()) {
                                 Toast.makeText(PostActivity.this, "New Post Updated", Toast.LENGTH_SHORT).show();
+                                sendUserToMainActivity();
                                 loadingbar.dismiss();
-                            }else{
+                            } else {
                                 Toast.makeText(PostActivity.this, "Error occurred while updating your post \n Try again", Toast.LENGTH_SHORT).show();
                                 loadingbar.dismiss();
                             }
@@ -220,6 +249,7 @@ public class PostActivity extends AppCompatActivity {
         });
     }
 
+    //intent to open gallery
     private void openGallery() {
         /*
         *                  Issue 01
@@ -262,6 +292,11 @@ public class PostActivity extends AppCompatActivity {
         Intent mainActivityIntent = new Intent(PostActivity.this, MainActivity.class);
         mainActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK| Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(mainActivityIntent);
+        finish();
+    }
+
+    private void sendUserToPostActivity() {
+        startActivity(new Intent(PostActivity.this, PostActivity.class));
         finish();
     }
 }

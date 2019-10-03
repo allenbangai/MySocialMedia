@@ -16,7 +16,6 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -49,13 +48,14 @@ public class SetupActivity extends AppCompatActivity {
 
     // loadingbar from class ProgressDialog to be changed to ProgressBar
     private ProgressDialog loadingbar;
-
     private FirebaseAuth mAuth;
     private DatabaseReference mUserReference;
     // Create a storage reference from our app
-    private StorageReference mUserProfileImage;
-
+    private StorageReference mUserProfileImageRef;
+    private StorageReference filePath;
+    private String getProfileImageDownloadUrl;
     String currentUserId;
+
     private final static int gallery_Prick = 1;
     private final static int PERMISSION_CODE_01 = 1001;
     private final static int PERMISSION_CODE_02 = 1002;
@@ -68,7 +68,8 @@ public class SetupActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         currentUserId = mAuth.getCurrentUser().getUid();
         mUserReference = FirebaseDatabase.getInstance().getReference().child("Users").child(currentUserId);
-        mUserProfileImage = FirebaseStorage.getInstance().getReference().child("Profile Images");
+        mUserProfileImageRef = FirebaseStorage.getInstance().getReference().child("Profile Images");
+        filePath = mUserProfileImageRef.child(currentUserId + ".jpg");
 
         setupCountryName = findViewById(R.id.id_setup_country);
         setupFullName = findViewById(R.id.id_setuo_full_name);
@@ -125,7 +126,7 @@ public class SetupActivity extends AppCompatActivity {
                     if(dataSnapshot.hasChild("profileImage")){
                         //getting string url of the image just uploaded after cropping
                         String image = dataSnapshot.child("profileImage").getValue().toString();
-                        Toast.makeText(SetupActivity.this, image+"\n\n message", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(SetupActivity.this, image, Toast.LENGTH_SHORT).show();
 
                         //Note that Picasso is not deprecated, I annotated it as deprecated as a mistake
                         //loading the square image uploaded to firebase storage as profile image
@@ -171,8 +172,6 @@ public class SetupActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == gallery_Prick && resultCode == RESULT_OK && data != null){
             Uri ImageUri = data.getData();
-
-
             CropImage.activity()
                     .setGuidelines(CropImageView.Guidelines.ON)
                     .setAspectRatio(1,1).start(this);
@@ -191,46 +190,39 @@ public class SetupActivity extends AppCompatActivity {
 
                 final Uri resultUri = result.getUri();
 
-                StorageReference filePath = mUserProfileImage.child(currentUserId + ".jpg");
-
                 filePath.putFile(resultUri).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+
                         if(task.isSuccessful()){
-                            Toast.makeText(SetupActivity.this, "Profile Image Successfully Uploaded ", Toast.LENGTH_LONG);
-                            final String downloadaUrl = task.getResult().getUploadSessionUri().toString();
-
-                            mUserReference.child("profileImage").setValue(downloadaUrl).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @SuppressLint("ShowToast")
+                            Toast.makeText(SetupActivity.this, "Profile Image Successfully Uploaded ", Toast.LENGTH_LONG).show();
+                            filePath.getDownloadUrl().addOnCompleteListener(new OnCompleteListener<Uri>() {
                                 @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-                                    if(task.isSuccessful()){
-                                        Intent intent = new Intent(SetupActivity.this, SetupActivity.class);
-                                        startActivity(intent);
+                                public void onComplete(@NonNull Task<Uri> task) {
+                                    getProfileImageDownloadUrl = task.getResult().toString();
+                                    Toast.makeText(SetupActivity.this, "url is \n"+getProfileImageDownloadUrl, Toast.LENGTH_SHORT).show();
+                                }
+                            });
 
-                                        //mUserProfileImage using bitmap;
+                            Intent intent = new Intent(SetupActivity.this, SetupActivity.class);
+                            startActivity(intent);
+                            //mUserProfileImageRef using bitmap;
                                         /*try {
                                             Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), resultUri);
                                             setupProfieImage.setImageBitmap(bitmap);
                                         } catch (IOException e) {
                                             e.printStackTrace();
                                         }*/
-                                        //mUserProfileImage using setImageURI;
-                                        setupProfieImage.setImageURI(resultUri);
-                                        Toast.makeText(SetupActivity.this, "Profile Image Succefully saved", Toast.LENGTH_LONG);
-                                        loadingbar.dismiss();
-                                    }
-                                    else{
-                                        String errorMessage = task.getException().getMessage();
-                                        Toast.makeText(SetupActivity.this, "Error Message \n" + errorMessage, Toast.LENGTH_LONG);
-                                        loadingbar.dismiss();
-                                    }
-                                }
-                            });
+                            //mUserProfileImageRef using setImageURI;
+                            setupProfieImage.setImageURI(resultUri);
+                            Toast.makeText(SetupActivity.this, "Profile Image Succefully saved", Toast.LENGTH_LONG).show();
+                            loadingbar.dismiss();
+
                         }
                         else{
                             String errorMessage = task.getException().getMessage();
                             Toast.makeText(SetupActivity.this, "Error Message \n" + errorMessage, Toast.LENGTH_LONG);
+                            loadingbar.dismiss();
                         }
                     }
                 });
@@ -247,6 +239,14 @@ public class SetupActivity extends AppCompatActivity {
         String userName = setupUsername.getText().toString();
         String country = setupCountryName.getText().toString();
 
+        filePath.getDownloadUrl().addOnCompleteListener(new OnCompleteListener<Uri>() {
+            @Override
+            public void onComplete(@NonNull Task<Uri> task) {
+                getProfileImageDownloadUrl = task.getResult().toString();
+                Toast.makeText(SetupActivity.this, "url is \n"+getProfileImageDownloadUrl, Toast.LENGTH_SHORT).show();
+            }
+        });
+
         if(TextUtils.isEmpty(fullName)){
             Toast.makeText(this, "Full Name field is empty", Toast.LENGTH_LONG).show();
         }
@@ -255,6 +255,9 @@ public class SetupActivity extends AppCompatActivity {
         }
         else if(TextUtils.isEmpty(country)){
             Toast.makeText(this, "Country field is empty", Toast.LENGTH_LONG).show();
+        }
+        else if(TextUtils.isEmpty(getProfileImageDownloadUrl)){
+            Toast.makeText(this, "Image field is empty", Toast.LENGTH_LONG).show();
         }
         else{
             // loadingbar from class ProgressDialog to be changed to ProgressBar
@@ -268,6 +271,7 @@ public class SetupActivity extends AppCompatActivity {
             userMap.put("username", userName);
             userMap.put("full_name", fullName);
             userMap.put("country", country);
+            userMap.put("profileImage", getProfileImageDownloadUrl);
             userMap.put("status", "Hey, using my social media");
             userMap.put("level_of_Study", "none");
             userMap.put("gender", "none");

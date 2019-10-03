@@ -1,5 +1,6 @@
 package com.example.mysocialmedia;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -122,7 +123,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     if (dataSnapshot.hasChild("profileImage")) {
                         String image = dataSnapshot.child("profileImage").getValue().toString();
                         Picasso.get().load(image).placeholder(R.drawable.profile).into(navProfileImage);
-                        //Toast.makeText(MainActivity.this, "You have a profile that is\n\n"+ image, Toast.LENGTH_SHORT);
+                        Toast.makeText(MainActivity.this, "profile url is \n\n" + image, Toast.LENGTH_SHORT);
                     }
                 }
             }
@@ -131,6 +132,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             public void onCancelled(@NonNull DatabaseError databaseError) { }
         });
 
+        //method to display users updated post
         displayAllUsersPost();
     }
 
@@ -139,13 +141,24 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         firebaseRecyclerAdapter = new FirebaseRecyclerAdapter<PostModule, PostModuleViewHolder>(options) {
             @Override
-            protected void onBindViewHolder(@NonNull PostModuleViewHolder holder, int position, @NonNull PostModule model) {
+            protected void onBindViewHolder(@NonNull PostModuleViewHolder holder, final int position, @NonNull PostModule model) {
+                final String postKey = getRef(position).getKey();
+
                 holder.setfullName(model.getFullName());
                 holder.setProfileImage(model.getProfileImage());
                 holder.setTime(model.getTime());
                 holder.setDate(model.getDate());
                 holder.setDescription(model.getDescription());
                 holder.setPostImage(model.getPostImage());
+
+                holder.mView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent clickPostIntent = new Intent(MainActivity.this, ClickPostActivity.class);
+                        clickPostIntent.putExtra("PostKey", postKey);
+                        startActivity(clickPostIntent);
+                    }
+                });
             }
 
             @NonNull
@@ -182,7 +195,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         public void setProfileImage(String profileImage){
             image = mView.findViewById(R.id.id_post_profileImage);
-            Picasso.get().load(profileImage).into(image);
+            Picasso.get().load(profileImage).placeholder(R.drawable.profile).into(image);
         }
 
         public void setTime(String time){
@@ -200,9 +213,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             postDescription.setText(description);
         }
 
+        @SuppressLint("ResourceType")
         public void setPostImage(String postImage){
             imagePostView = mView.findViewById(R.id.id_post_image);
-            Picasso.get().load(postImage).into(imagePostView);
+            Picasso.get().load(postImage).placeholder(R.drawable.select_image).into(imagePostView);
         }
     }
 

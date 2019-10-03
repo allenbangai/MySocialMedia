@@ -92,9 +92,11 @@
         <ImageView
             android:id="@+id/id_post_image"
             android:layout_width="match_parent"
-            android:layout_height="300dp"
+            android:layout_height="@dimen/image_hight_400dp_"
+            android:background="#F01A1919"
+            android:src="@drawable/select_image"
             android:padding="4dp"
-            android:scaleType="centerCrop"
+            android:scaleType="centerInside"
             android:adjustViewBounds="true"/>
     </LinearLayout>
 
